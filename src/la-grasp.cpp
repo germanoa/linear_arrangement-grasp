@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstdlib> 
+#include <vector>
 
 using namespace std;
 
@@ -8,10 +9,19 @@ using namespace std;
 //numero iteracoes
 // randomicidade p
 
+typedef vector<int> vi;
+//typedef pair<int,int> ii;
+//typedef vector<ii> vii;
+
 //estruturas dado global
-//graph
+vector<vi> adj_list;
+int best_x = -1;
+int n,m;
+vi vertex_degree;
+int null;
+vi grasp_initial_solution;
 //hashtable com solucoes iniciais jah testadas
-int best_x = 0;
+
 
 // void read_input()
 // popula a estrutura de dados (a escolher) que eh global
@@ -22,15 +32,67 @@ int best_x = 0;
 // constroi a solucao inicial com randomicidade p (0 = nada, 1 = 100% random)
 
 void read_input() {
-	printf("input\n");
+	// n vertexes
+	cin >> n;
+	// m edges
+	cin >> m;
+
+	
+	int it_n = n;
+	int temp;
+	while (it_n--) {
+		cin >> temp;
+		vertex_degree.push_back(temp);
+	}
+	
+	adj_list.assign(n,vi());
+	int it_m = m;
+	int v1,v2;
+	while (it_m--) {
+		cin >> v1;
+		cin >> v2;
+		adj_list[v1].push_back(v2);
+		//adj_list[v2].push_back(v1);
+	}
+
+	//-1
+	cin >> null;
+	if (null==-1) {
+		printf("ok\n");
+	} else {
+		printf("ops\n");
+	}
+
 }
 
-int is_new_initial_solution(int s) {
-	return 0;
+int is_new_initial_solution() {
+	return 1;
 }
 
-int construct(int p) {
-	return 0;
+int solution_cost(vi s) {
+	int cost=0;
+	int x;
+	for (int u=0; u<n; ++u) {
+		for (int v=0; v < (int) adj_list[u].size(); ++v) {
+			x = s[u] - s[adj_list[u][v]];
+			if (x<0) { x=x*-1; };
+			printf("cost: %d\n",cost);
+			cost += x;
+		}
+	}
+	return cost;
+}
+
+void print_solution() {
+	for (int i=0; i<n; ++i) {
+		printf("%d -> %d\n",i,grasp_initial_solution[i]);
+	}
+}
+
+void construct(int p) {
+	for (int i=0; i<n; ++i) {
+		grasp_initial_solution[i]=i;
+	}
 }
 
 int local_search() {
@@ -47,18 +109,21 @@ int main(int argc, char* argv[]) {
 	int it = atoi(argv[1]);
 	int p = atoi(argv[2]);	
 	int x;
-	int grasp_initial_solution;
 
 	read_input();
+
 	
+	grasp_initial_solution.assign(n,0);
 	while(it--) {
-		grasp_initial_solution = construct(p);
-		if (is_new_initial_solution(grasp_initial_solution)) {
-			x = local_search();
+		construct(p);
+		if (is_new_initial_solution()) {
+			x = solution_cost(grasp_initial_solution);
+			//x = local_search();
 			if (best_x < x) {
 				best_x = x;
 			}
 		}
 	}
-
+	printf("%d\n",best_x);
+	print_solution();
 }
