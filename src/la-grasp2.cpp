@@ -5,17 +5,25 @@
 #include <unistd.h>
 #include <vector>
 #include <queue>
+#include <stack>
 
 using namespace std;
 
 #define MAXSOL 999999999
 #define THREADS 1
-#define FREE -1
+#define FREE 0
+#define BUSY -1
+#define MAXVERTEX 9800
+
+#define NEIGHBOR 1
 
 typedef vector<int> vi;
 
 vector<vi> adj_list;
 vector<int>::iterator it_adj_list;
+
+int matrix[MAXVERTEX][MAXVERTEX];
+int sol[MAXVERTEX];
 
 int tentativas = 0;
 int best_x = MAXSOL;
@@ -25,10 +33,23 @@ int it,r;
 string infile;
 priority_queue< pair<int,int>, vector< pair<int,int> >, greater< pair<int,int> > > vertex_degree;
 int null;
-vi sol;
 ofstream logfile;
 //hashtable com solucoes iniciais jah testadas
 
+
+void init_matrix() {
+	for (int i=0; i<MAXVERTEX;++i) {
+		for (int j=0; j<MAXVERTEX;++j) {
+			matrix[i][j]=FREE;
+		}
+	}
+}
+
+void init_sol() {
+	for (int i=0; i<MAXVERTEX;++i) {
+		sol[i]=FREE;
+	}
+}
 
 void read_input() {
 	// n vertexes
@@ -48,8 +69,10 @@ void read_input() {
 	while (it_m--) {
 		cin >> v1;
 		cin >> v2;
-		//adj_list[v1].push_back(v2);
-		adj_list[v2].push_back(v1);
+		adj_list[v1].push_back(v2);
+		//adj_list[v2].push_back(v1);
+		matrix[v1][v2]=NEIGHBOR;
+		matrix[v2][v1]=NEIGHBOR;
 	}
 
 	//-1
@@ -61,6 +84,7 @@ int is_new_initial_solution() {
 	return 1;
 }
 
+// objective function (Z)
 int solution_cost() {
 	int cost=0;
 	int x;
@@ -94,54 +118,59 @@ void print_status() {
 	logfile.close();
 }
 
+// construct with greedy and randomness
 void construct(int r) {
-	priority_queue< pair<int,int>, vector< pair<int,int> >, greater< pair<int,int> > > rcl;
-	rcl = vertex_degree;
-	int i=0;
-	int next_candidate; //next_candidate = vertex with high degree (more neighbor)
-	int candidate_neighbor;
+	queue<int> pre_sol;
+	vector<int> rcl; //value based scheme 
+	int order=1;
+	int selected, candidate;
 
-	sol.assign(n,FREE);
-	while(i<n) {
-		// next_candidate vertex
-		next_candidate=rcl.top().second;
-		int prio=rcl.top().first; //high degree -> high prio
-		rcl.pop();
+	init_sol();
 
-		if (sol[next_candidate]==FREE) {
-			// STEP1: randomness
-			// next_candidate can be rejected and its priority decremented
-			if (r!=0) {
-				// about random selection:
-				// r=0: no random; r=10: totally random(50% a 50%)
-				if ((rand() % 100) <= 5 * r) {
-					//cout << "random!" << endl;
-					prio--;
-					rcl.push( make_pair(prio,next_candidate) );
-					// new next_candidate because randomness
-					next_candidate=rcl.top().second;
-					rcl.pop();
-						
+	//if ((rand() % n) <= 5 * r) { }
+
+	//random part
+	selected = rand() % n;
+	cout << "first: " << selected << endl;
+	pre_sol.push(selected);
+	//pre_sol.push(vertex_degree.top().second);
+
+	while(!pre_sol.empty()) {
+		selected = pre_sol.front();
+		pre_sol.pop();
+		
+		sol[selected]=order++;
+
+		//greedy part
+		for (int i=0;i<MAXVERTEX;++i) {
+			if (matrix[selected][i]	== NEIGHBOR) {
+				if (sol[i] == FREE) {
+					sol[i]=BUSY;
+					rcl.push_back(i);
 				}
 			}
-
-			//STEP2: select candidate to linear arrangement 
-			sol[next_candidate]=i;
-			++i;
-			if (i==n) { break; }
-
-			//STEP3: j neighbors must be near from candidate selected
-			for (it_adj_list = adj_list[next_candidate].begin(); it_adj_list != adj_list[next_candidate].end(); ++it_adj_list) {
-				candidate_neighbor=sol[*it_adj_list];
-
-				if (sol[candidate_neighbor]==FREE) {
-					sol[candidate_neighbor]=i;
-					++i;
-					if(i==n) { break; }
+		}	
+	
+		//random part
+		while (!rcl.empty()) {
+                        candidate = rand() % rcl.size();
+                        selected = rcl[candidate];
+                        pre_sol.push(selected);
+                        rcl.erase(rcl.begin()+candidate);
+		}
+	
+		// vertex whitout neighbors until now
+		if (pre_sol.empty()) {
+			if (order!=n) {
+				for (int i=0;i<MAXVERTEX;++i) {
+					if (sol[i]==FREE) {
+						sol[i]=BUSY;
+						pre_sol.push(i);
+					}
 				}
 			} 
-
 		}
+
 	}
 
 	x = solution_cost();
@@ -172,6 +201,9 @@ int local_search() {
 		}
 	}
 	return local_x;
+	if (local_x < x) {
+		cout <<" best local!\n" << endl;
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -185,11 +217,15 @@ int main(int argc, char* argv[]) {
 	r = atoi(argv[2]);	//randomness
 	infile = argv[3];
 
+		
+	//random seed
+	srand( static_cast<unsigned>( time( 0 ) ) );
+
 	read_input();
 
 	//GRASP
 	for (int i=0; i<it; ++i) {
-		cout << "iteracao: " << i << endl;
+		//cout << "iteracao: " << i << endl;
 		construct(r);
 		if (is_new_initial_solution()) {
 			x = local_search();
