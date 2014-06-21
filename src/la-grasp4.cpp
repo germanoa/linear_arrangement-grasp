@@ -105,28 +105,28 @@ void print_solution() {
 
 static inline int _diff_cost(int v1, int v2, int bigger, int _it, int _over) {
 	int diff,ret=0;
-	cout << "_it: " << _it << endl;
-	cout <<"vizinhos de:" << endl;
+	//cout << "_it: " << _it << endl;
+	//cout <<"vizinhos de:" << endl;
 	for (int v=0; v < _it; ++v) {
-		cout << v1 << ": " << al[v1][v] << endl;
+		//cout << v1 << ": " << al[v1][v] << endl;
 		diff = sol[v1] - sol[al[v1][v]];
 		if (diff<0) { diff=diff*-1; };
 		ret += diff;
 
-		cout << v2 << ": " << al[v2][v] << endl;
+		//cout << v2 << ": " << al[v2][v] << endl;
 		diff = sol[v2] - sol[al[v2][v]];
 		if (diff<0) { diff=diff*-1; };
 		ret += diff;
 	}
-	cout << "__it+_over: " << _it+_over << endl;
+	//cout << "__it+_over: " << _it+_over << endl;
 	for (int v=_it; v < _it+_over; ++v) {
 		if (bigger==1) {
-			cout << v1 << ": " << al[v1][v] << endl;
+			//cout << v1 << ": " << al[v1][v] << endl;
 			diff = sol[v1] - sol[al[v1][v]];
 			if (diff<0) { diff=diff*-1; };
 			ret += diff;
 		} else {
-			cout << v2 << ": " << al[v2][v] << endl;
+			//cout << v2 << ": " << al[v2][v] << endl;
 			diff = sol[v2] - sol[al[v2][v]];
 			if (diff<0) { diff=diff*-1; };
 			ret += diff;
@@ -135,10 +135,10 @@ static inline int _diff_cost(int v1, int v2, int bigger, int _it, int _over) {
 	return ret;
 }
 
-int update_cost(int v1, int v2, int last_cost) {
-	int ret, v1_neighbors, v2_neighbors;
+void update_cost(int v1, int v2) {
+	int v1_neighbors, v2_neighbors;
 
-	cout << "v1: " << v1 << " v2: " << v2 << endl;
+	//cout << "v1: " << v1 << " v2: " << v2 << endl;
 	
 	//to save neighbors iterations
 	v1_neighbors = (int) al[v1].size();
@@ -153,23 +153,26 @@ int update_cost(int v1, int v2, int last_cost) {
 		_over=v2_neighbors-v1_neighbors;
 		bigger=2;
 	}
-	cout <<"last_cost: " << last_cost << endl;
+
 	int diff_to_del = _diff_cost(v1,v2,bigger,_it,_over);
-	cout <<"diff_to_del: " << diff_to_del << endl;
+	//cout <<"diff_to_del: " << diff_to_del << endl;
+
 	_invert(v1,v2);
+
 	int diff_to_add = _diff_cost(v1,v2,bigger,_it,_over);
-	cout <<"diff_to_add: " << diff_to_add << endl;
+	//cout <<"diff_to_add: " << diff_to_add << endl;
 
-	tentativas++;
-//	cout <<"last_cost2: " << last_cost << endl;
 
-	ret = last_cost - diff_to_del;
-//	cout <<"ret: " << ret << endl;
+	if (diff_to_del>diff_to_add) {
+		x = x - diff_to_del;
+		x += diff_to_add;
+		//cout <<"new x: " << x << endl;
+	//print_solution();
+	} else {
+		_invert(v2,v1); //revert attempt
+	}
 
-	ret += diff_to_add;
-	cout <<"ret: " << ret << endl;
-	print_solution();
-	return ret;
+	++tentativas;
 }
 
 
@@ -240,17 +243,13 @@ void construct() {
 }
 
 void local_search() {
-	int temp;
 	int partitions = n/THREADS;
 	
 	for (int i=0; i<partitions-1; ++i) {
 		for (int j=0; j<THREADS; ++j) { 
-			temp = update_cost(j+i,j+i+1,x);
+			update_cost(j+i,j+i+1);
 			//_invert(j+i,j+i+1);
 			//temp = solution_cost();
-			if (temp < x) {
-				x = temp;
-			}  
 		}
 	}
 }
@@ -281,7 +280,7 @@ int main(int argc, char* argv[]) {
 	//GRASP
 	for (int i=0; i<it; ++i) {
 		construct();
-		print_solution();
+		//print_solution();
 		if (is_new_initial_solution()) {
 			local_search();
 			if (x < best_x) {
