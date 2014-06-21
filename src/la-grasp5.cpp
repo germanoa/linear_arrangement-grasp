@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <fstream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <cstdlib> 
 #include <unistd.h>
 #include <vector>
@@ -24,7 +25,9 @@ vector<int>::iterator it_al;
 int tentativas = 0;
 int first_x;
 int best_x = MAXSOL;
-int best_degree=0;
+vi degrees;
+vi neighbors;
+vi n_neighbors;
 int x;
 int n,m;
 int it;
@@ -48,27 +51,36 @@ void read_input() {
 	// m edges
 	cin >> m;
 
-	int temp=0,temp2=0;
+	int temp;
+	//degrees.assign(n);
 	for (int i=0; i<n; ++i) {
 		cin >> temp;
-		if (temp>temp2) {
-			best_degree=i;
-			temp2=temp;
-		}
+		degrees.push_back(temp);
 	}
-	
-	al.assign(n,vi());
-	int it_m = m;
-	int v1,v2;
-	while (it_m--) {
-		cin >> v1;
-		cin >> v2;
-		al[v1].push_back(v2);
-		al[v2].push_back(v1);
+
+	//neighbors.assign(2*m);
+	for (int i=0; i<2*m; ++i) {
+		cin >> temp;
+		neighbors.push_back(temp);
 	}
 
 	//-1
 	cin >> null;
+
+	//n_neighbors.assign(n+1);
+	for (int i=0; i<n+1; ++i) {
+		cin >> temp;
+		n_neighbors.push_back(temp);
+	}
+
+	al.assign(n,vi());
+	for (int i=0; i<n; ++i) {
+		for (int j=n_neighbors[i]; j<n_neighbors[i+1]; ++j) {
+			al[i].push_back(neighbors[j]);
+			//al[neighbors[j]].push_back(i);
+		}
+	}
+
 }
 
 int is_new_initial_solution() {
@@ -77,12 +89,10 @@ int is_new_initial_solution() {
 
 int solution_cost() {
 	int cost=0;
-	int x;
 	for (int u=0; u<n; ++u) {
 		for (int v=0; v < (int) al[u].size(); ++v) {
-			x = sol[u] - sol[al[u][v]];
-			if (x<0) { x=x*-1; };
-			cost += x;
+			cost +=abs(sol[u] - sol[al[u][v]]);
+			//cout << u << "-" << al[u][v] << ": "<< cost << endl;
 		}
 	}
 
@@ -110,32 +120,24 @@ void print_solution() {
 }
 
 static inline int _diff_cost(int v1, int v2, int bigger, int _it, int _over) {
-	int diff,ret=0;
+	int ret=0;
 	//cout << "_it: " << _it << endl;
 	//cout <<"vizinhos de:" << endl;
 	for (int v=0; v < _it; ++v) {
 		//cout << v1 << ": " << al[v1][v] << endl;
-		diff = sol[v1] - sol[al[v1][v]];
-		if (diff<0) { diff=diff*-1; };
-		ret += diff;
+		ret +=abs(sol[v1] - sol[al[v1][v]]);
+		ret +=abs(sol[v2] - sol[al[v2][v]]);
 
 		//cout << v2 << ": " << al[v2][v] << endl;
-		diff = sol[v2] - sol[al[v2][v]];
-		if (diff<0) { diff=diff*-1; };
-		ret += diff;
 	}
 	//cout << "__it+_over: " << _it+_over << endl;
 	for (int v=_it; v < _it+_over; ++v) {
 		if (bigger==1) {
 			//cout << v1 << ": " << al[v1][v] << endl;
-			diff = sol[v1] - sol[al[v1][v]];
-			if (diff<0) { diff=diff*-1; };
-			ret += diff;
+			ret +=abs(sol[v1] - sol[al[v1][v]]);
 		} else {
 			//cout << v2 << ": " << al[v2][v] << endl;
-			diff = sol[v2] - sol[al[v2][v]];
-			if (diff<0) { diff=diff*-1; };
-			ret += diff;
+			ret +=abs(sol[v2] - sol[al[v2][v]]);
 		}
 	}
 	return ret;
@@ -163,6 +165,13 @@ void update_cost(int v1, int v2) {
 	int diff_to_del = _diff_cost(v1,v2,bigger,_it,_over);
 	//cout <<"diff_to_del: " << diff_to_del << endl;
 
+	//if (my_random) {
+	//	v2 = rand() % n; 
+	//	_invert(v1,v2);
+
+	//} else {
+	//	_invert(v1,v2);
+	//}
 	_invert(v1,v2);
 
 	int diff_to_add = _diff_cost(v1,v2,bigger,_it,_over);
@@ -204,7 +213,7 @@ void construct() {
 	if (my_random) {
 	        selected = rand() % n;
 	} else {
-		selected=best_degree;
+		selected=0;
 	}
         pre_sol.push(selected);
 
