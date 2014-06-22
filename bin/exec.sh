@@ -18,3 +18,8 @@ for x in `seq 1 10`; do
 		done
 	done
 done
+
+mkdir out/results/$NOW
+for i in `ls -1 in/`; do
+	cat out/logfile-$NOW.txt |grep $i > out/results/$NOW/$i.txt
+done
