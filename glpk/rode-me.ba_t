@@ -1,0 +1,51 @@
+@echo off
+
+echo Rodando instancia 3elt...
+glpsol -m minla.mod -d 3elt.dat -o 3elt.sol
+echo.
+echo.
+
+echo Rodando instancia airfoil1...
+glpsol -m minla.mod -d airfoil1.dat -o airfoil1.sol
+echo.
+echo.
+
+echo Rodando instancia bintree10...
+glpsol -m minla.mod -d bintree10.dat -o bintree10.sol
+echo.
+echo.
+
+echo Rodando instancia c3y...
+glpsol -m minla.mod -d c3y.dat -o c3y.sol
+echo.
+echo.
+
+echo Rodando instancia c4y...
+glpsol -m minla.mod -d c4y.dat -o c4y.sol
+echo.
+echo.
+
+echo Rodando instancia c5y...
+glpsol -m minla.mod -d c5y.dat -o c5y.sol
+echo.
+echo.
+
+echo Rodando instancia gd96a...
+glpsol -m minla.mod -d gd96a.dat -o gd96a.sol
+echo.
+echo.
+
+echo Rodando instancia hc10...
+glpsol -m minla.mod -d hc10.dat -o hc10.sol
+echo.
+echo.
+
+echo Rodando instancia mesh33x33...
+glpsol -m minla.mod -d mesh33x33.dat -o mesh33x33.sol
+echo.
+echo.
+
+echo Rodando instancia whitaker3...
+glpsol -m minla.mod -d whitaker3.dat -o whitaker3.sol
+echo.
+echo.
